@@ -1,0 +1,31 @@
+docker-compose.yml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OLD stuff
+OLD/*
+
+# Generated BLN data
+GENERATED/*
+
+# MySQL internal data
+mysql/data/*
+
+# Documentation dockers not finished yet
+mintlify/*
+sphinx/*
+
+# Frontend not ready yet
+frontend/*
+
+# Old Backend code
+backend/*
+backend2/OLD/*
+
+
+# Backend untracked files
+backend2/LNRESEARCH/*
+backend2/IPGeo/*

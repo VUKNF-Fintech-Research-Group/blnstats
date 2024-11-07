@@ -1,0 +1,229 @@
+services:
+
+
+  blnstats-endpoint:
+    container_name: blnstats-endpoint
+    image: nginx:alpine-slim
+    read_only: false
+    volumes:
+      - ./endpoint/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - blnstats-backend
+      - blnstats-frontend
+      - blnstats-sphinx
+    networks:
+      - isolated
+      - shared-isolated
+    restart: unless-stopped
+
+
+
+  blnstats-frontend:
+    container_name: blnstats-frontend
+    image: blnstats-frontend
+    user: 1000:1000
+    read_only: false
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+    environment:
+      - REACT_APP_BACKEND=blnstats.knf.vu.lt/api
+    networks:
+      - isolated
+      - external
+    restart: unless-stopped
+
+
+
+  blnstats-prefect-server:
+    container_name: blnstats-prefect-server
+    image: blnstats-prefect-server
+    build:
+      context: ./prefect
+      dockerfile: Dockerfile
+    read_only: false
+    environment:
+      - PREFECT_UI_API_URL=/prefect/api
+      - PREFECT_UI_SERVE_BASE=/prefect
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-prefect-worker:
+    container_name: blnstats-prefect-worker
+    image: blnstats-prefect-worker
+    build: ./backend2
+    user: 1000:1000
+    read_only: false
+    command: ["python3", "-u", "prefectTest.py"]
+    volumes:
+      - ./backend2:/app
+    environment:
+      - PREFECT_API_URL=http://blnstats-prefect-server:4200/api
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-backend:
+    container_name: blnstats-backend
+    image: blnstats-backend
+    build: ./backend
+    user: 1000:1000
+    read_only: false
+    tmpfs:
+      - /.config/matplotlib:uid=1000,gid=1000
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./backend:/app
+    environment:
+      - BACKEND_HOST_OUTSIDE=https://blnstats.knf.vu.lt
+    networks:
+      - isolated
+      - external
+    restart: unless-stopped
+
+
+
+  blnstats-backend2:
+    container_name: blnstats-backend2
+    image: blnstats-backend2
+    user: 1000:1000
+    read_only: false
+    build: ./backend2
+    tmpfs:
+      - /.config/matplotlib:uid=1000,gid=1000
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./backend2:/app
+      - ./GENERATED:/app/GENERATED
+    environment:
+      - TMPDIR=/.config/matplotlib
+      - MPLCONFIGDIR=/.config/matplotlib
+      # - BACKEND_HOST_OUTSIDE=https://blnstats.knf.vu.lt
+    networks:
+      - isolated
+      - external
+    restart: unless-stopped
+
+
+
+  blnstats-mysql:
+    container_name: blnstats-mysql
+    image: mysql:9.0.0
+    user: 1000:1000
+    read_only: true
+    tmpfs:
+      - /run/mysqld:uid=999,gid=999
+      - /tmp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: lnstats
+      MYSQL_USER: lnstats
+      MYSQL_PASSWORD: lnstats
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-dbgate:
+    container_name: blnstats-dbgate
+    image: dbgate/dbgate:5.3.1-alpine
+    read_only: false
+    environment:
+      WEB_ROOT: /dbgate
+
+      LOGINS: admin
+      LOGIN_PASSWORD_admin: admin
+
+      CONNECTIONS: con4
+      LABEL_con4: BLN Statistics - MYSQL
+      SERVER_con4: blnstats-mysql
+      USER_con4: root
+      PASSWORD_con4: root
+      PORT_con4: 3306
+      ENGINE_con4: mysql@dbgate-plugin-mysql
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-filebrowser:
+    container_name: blnstats-filebrowser
+    image: blnstats-filebrowser
+    build:
+      context: ./filebrowser
+      dockerfile: Dockerfile
+    read_only: false
+    volumes:
+      - ./GENERATED:/data:ro
+    environment:
+      - PUID=1000
+      - PGID=1000
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-sphinx:
+    container_name: blnstats-sphinx
+    image: sphinxdoc/sphinx
+    build: ./sphinx
+    volumes:
+      - ./sphinx/docs:/docs
+      - ./backend2:/app/backend:ro
+    working_dir: /docs
+    networks:
+      - isolated
+    restart: unless-stopped
+
+
+
+  blnstats-mintlify:
+    container_name: blnstats-mintlify
+    image: blnstats-mintlify
+    build: ./mintlify
+    volumes:
+      - ./mintlify:/app
+    networks:
+      - isolated
+      - external
+    restart: unless-stopped
+
+
+
+networks:
+  external:
+    name: external
+    external: true
+  isolated:
+    name: blnstats-isolated
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.18.15.0/24
+          gateway: 172.18.15.1
+  shared-isolated:
+    name: shared-isolated-public
+    driver: bridge
+    external: true
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.19.0.0/24
+          gateway: 172.19.0.1
+
+
