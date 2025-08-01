@@ -1,0 +1,102 @@
+:80 {
+
+    # # SECURITY: Restricts the app in the browser from communicating with external sources
+    # header Content-Security-Policy "
+    #     default-src 'self';
+    #     script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    #     style-src 'self' 'unsafe-inline';
+    #     img-src 'self' data:;
+    #     font-src 'self' data:;
+    #     connect-src 'self';
+    #     frame-ancestors 'self';
+    #     frame-src 'self';
+    #     child-src 'self';
+    #     form-action 'self';
+    #     worker-src 'self' blob:;
+    #     base-uri 'self';
+    #     block-all-mixed-content;
+    # "
+
+
+
+    # Sphinx Documentation
+    handle /docs/* {
+        uri strip_prefix /docs
+        reverse_proxy blnstats-sphinx:8000
+    }
+
+
+
+    # VitePress Documentation  
+    redir /vitepress /vitepress/
+    handle /vitepress/* {
+        reverse_proxy blnstats-vitepress:3000
+    }
+
+
+
+    # Rawdata
+    redir /rawdata /rawdata/
+    handle_path /rawdata/* {
+        header Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        header Pragma "no-cache"
+        root * /srv
+        file_server browse
+    }
+
+
+
+    # Filebrowser (Auth protected)
+    redir /filebrowser /filebrowser/
+    handle /filebrowser/api/users* {
+        respond "This functionality is disabled." 403
+    }
+    handle /filebrowser/settings* {
+        respond "This functionality is disabled." 403
+    }
+    handle /filebrowser/* {
+        forward_auth blnstats-backend:8000 {
+            uri /api/checkauth
+        }
+        reverse_proxy blnstats-filebrowser:80
+    }
+
+
+
+    # Prefect (Auth protected)
+    redir /prefect/api /prefect/api/
+    handle /prefect/api/* {
+        forward_auth blnstats-backend:8000 {
+            uri /api/checkauth
+        }
+        reverse_proxy blnstats-prefect-server:4200
+    }
+    redir /prefect /prefect/
+    handle /prefect/* {
+        forward_auth blnstats-backend:8000 {
+            uri /api/checkauth
+        }
+        reverse_proxy blnstats-prefect-server:4200
+    }
+
+
+
+    # DBGate (Auth protected)
+    redir /dbgate /dbgate/
+    handle /dbgate/* {
+        forward_auth blnstats-backend:8000 {
+            uri /api/checkauth
+        }
+        reverse_proxy blnstats-dbgate:3000
+    }
+
+
+
+    # Backend
+    reverse_proxy /api/* blnstats-backend:8000
+
+
+
+    # NextJS
+    reverse_proxy /* blnstats-nextjs:3000
+}

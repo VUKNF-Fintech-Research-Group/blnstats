@@ -1,0 +1,9 @@
+LNRESEARCH
+db.sqlite3
+lnd-dbreader.json
+db.sqlite3
+
+# OTHER: Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

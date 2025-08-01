@@ -1,16 +1,12 @@
 services:
 
-
   blnstats-endpoint:
     container_name: blnstats-endpoint
-    image: nginx:alpine-slim
-    read_only: false
+    image: caddy:2-alpine
+    read_only: true
     volumes:
-      - ./endpoint/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - blnstats-backend
-      - blnstats-frontend
-      - blnstats-sphinx
+      - ./endpoint/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./DATA:/srv:ro
     networks:
       - isolated
       - shared-isolated
@@ -101,7 +97,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./backend2:/app
-      - ./GENERATED:/app/GENERATED
+      - ./DATA:/DATA
     environment:
       - TMPDIR=/.config/matplotlib
       - MPLCONFIGDIR=/.config/matplotlib
@@ -138,7 +134,7 @@ services:
 
   blnstats-dbgate:
     container_name: blnstats-dbgate
-    image: dbgate/dbgate:5.3.1-alpine
+    image: dbgate/dbgate:6.6.0-alpine
     read_only: false
     environment:
       WEB_ROOT: /dbgate

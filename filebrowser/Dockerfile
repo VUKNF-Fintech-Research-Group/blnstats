@@ -1,4 +1,4 @@
-FROM filebrowser/filebrowser:v2.31.1
+FROM filebrowser/filebrowser:v2.32.0
 
 WORKDIR /
 
@@ -7,5 +7,5 @@ COPY branding /branding
 
 RUN /filebrowser config init
 RUN /filebrowser users add student ''
-RUN /filebrowser config set --branding.name "VU KNF Dropbox" --branding.files "/branding" --branding.disableExternal --branding.theme "dark"
+RUN /filebrowser config set --branding.name "BLN Stats Data" --branding.files "/branding" --branding.disableExternal --branding.theme "dark"
 RUN /filebrowser config set --auth.method=noauth
