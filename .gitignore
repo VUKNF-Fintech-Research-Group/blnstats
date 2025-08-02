@@ -1,4 +1,5 @@
 docker-compose.yml
+.env
 
 # OLD stuff
 OLD
@@ -8,6 +9,9 @@ DATA
 
 # MySQL internal data
 mysql/data
+
+# Prefect internal data
+prefect/data
 
 # Documentation dockers not finished yet
 vitepress

@@ -33,4 +33,4 @@ pytest==8.3.3
 mysql-connector-python==9.0.0
 
 # Prefect
-prefect==3.0.8
+prefect==3.4.11

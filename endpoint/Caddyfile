@@ -66,6 +66,7 @@
     # Prefect (Auth protected)
     redir /prefect/api /prefect/api/
     handle /prefect/api/* {
+        uri strip_prefix /prefect
         forward_auth blnstats-backend:8000 {
             uri /api/checkauth
         }
