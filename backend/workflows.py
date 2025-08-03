@@ -119,12 +119,9 @@ def import_ln_research_data():
 
 
 
-############################################################################
-################################## WORKFLOWS ###############################
-############################################################################
-
-
-
+##############################################################################################
+########################################### WORKFLOWS ########################################
+##############################################################################################
 
 
 
@@ -140,10 +137,6 @@ def ln_research_import_flow():
     """Flow to import LNResearch data."""
     return import_ln_research_data()
 ############################################################################
-
-
-
-
 
 
 
@@ -192,27 +185,47 @@ def lightning_network_statistics_flow():
 
 
 
+###################### LND DBREADER FULL UPDATE FLOW #######################
+@flow
+def lnd_dbreader_full_update_flow(file_path=None):
+    """Flow to fully update from LND DBReader including import and analysis"""
+
+    # Import LND DBReader data from Vilnius university Kaunas faculty or from provided file path
+    if(file_path == None):
+        file_path = "https://blnstats.knf.vu.lt/rawdata/INPUT/lnd-dbreader-A336EEAB--latest.json.gz"
+    lnd_dbreader_import_result = import_lnd_dbreader_data(file_path)
+
+    # Run BLN analysis calculations
+    analysis_results = lightning_network_statistics_flow()
+
+    return {
+        "lnd_dbreader_import": lnd_dbreader_import_result,
+        "bln_analysis": analysis_results
+    }
+############################################################################
+
+
 
 
 
 ######################### FULL INITIALIZATION FLOW #########################
 @flow
 def full_initialization_flow():
-    """Complete data pipeline: import -> calculate -> sync."""
+    """Complete data pipeline: import -> sync -> calculate"""
 
     # Import LNResearch data
     ln_research_import_result = import_ln_research_data()
 
-    # Import LND DBReader from Vilnius university Kaunas faculty data
+    # Import LND DBReader data from Vilnius university Kaunas faculty
     lnd_dbreader_import_result = import_lnd_dbreader_data("https://blnstats.knf.vu.lt/rawdata/INPUT/lnd-dbreader-A336EEAB--latest.json.gz")
 
-    # Run LN statistics calculations
-    stats_results = lightning_network_statistics_flow()
+    # Run BLN analysis calculations
+    analysis_results = lightning_network_statistics_flow()
     
     return {
         "ln_research_import": ln_research_import_result,
         "lnd_dbreader_import": lnd_dbreader_import_result,
-        "statistics": stats_results
+        "bln_analysis": analysis_results
     }
 ############################################################################
 
