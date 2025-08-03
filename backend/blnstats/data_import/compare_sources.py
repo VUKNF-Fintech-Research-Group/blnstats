@@ -20,7 +20,7 @@ class CompareSources:
     def __init__(self, xTicksToGenerate, xTicksToExclude):
         general_stats = self.compare_sources(
             source_db_table1="_LNResearch_ChannelAnnouncements",
-            column_name1="short_channel_id",
+            column_name1="ShortChannelID",
             source_db_table2="_LND_DBReader_ChannelAnnouncements",
             column_name2="ShortChannelID"
         )
@@ -72,7 +72,7 @@ class CompareSources:
                 query_research = """
                     SELECT DATE_FORMAT(b.Date, '%Y-%m') AS month, COUNT(*) AS count
                     FROM _LNResearch_ChannelAnnouncements a
-                    JOIN Blockchain_Blocks b ON a.blockchain_height = b.BlockHeight
+                    JOIN Blockchain_Blocks b ON a.BlockIndex = b.BlockHeight
                     WHERE b.Date >= '2018-01-01'
                     GROUP BY month
                     ORDER BY month;

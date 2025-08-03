@@ -52,7 +52,6 @@ services:
   blnstats-backend:
     container_name: blnstats-backend
     image: blnstats-backend
-    user: 1000:1000
     read_only: false
     build: ./backend
     tmpfs:
@@ -70,7 +69,6 @@ services:
   blnstats-mysql:
     container_name: blnstats-mysql
     image: mysql:9.0.0
-    user: 1000:1000
     read_only: true
     tmpfs:
       - /run/mysqld:uid=999,gid=999
@@ -105,7 +103,6 @@ services:
     container_name: blnstats-prefect-worker
     image: blnstats-prefect-worker
     build: ./backend
-    user: 1000:1000
     read_only: false
     command: ["python3", "-u", "workflows.py"]
     tmpfs:
