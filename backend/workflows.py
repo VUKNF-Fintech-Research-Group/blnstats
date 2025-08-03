@@ -104,6 +104,13 @@ def import_lnd_dbreader_data(file_path):
     return f"LND DBReader data imported from {file_path}"
 
 
+@task
+def import_ln_research_data():
+    """Import LNResearch data."""
+    print("Importing LNResearch data...")
+    blnstats.importLNResearchData()
+    print("LNResearch data import completed.")
+    return "LNResearch data imported"
 
 
 

@@ -72,6 +72,10 @@ if __name__ == "__main__":
             print("    python3 main.py --import-lnd-dbreader-data /DATA/INPUT/lnd-dbreader-20250101-123456.json.gz")
             print("")
 
+    elif(sys.argv[1] == "--import-ln-research-data"):
+        blnstats.importLNResearchData()
+
+
 
     elif(sys.argv[1] == "--serve-api"):
         app = blnstats.create_app()

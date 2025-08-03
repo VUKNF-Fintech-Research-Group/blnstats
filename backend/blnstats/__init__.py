@@ -856,7 +856,6 @@ def synchronizeBlockchain():
 
 
 def importLNDDBReader(file_path):
-
     # Import LND DBReader data
     from .data_import.lnd_dbreader import LNDDBReader
     LNDDBReader(file_path)
@@ -871,9 +870,25 @@ def importLNDDBReader(file_path):
     )
     entityObj.import_new_entities_to_main_table()
     entityObj.fix_entity_hex_names_if_possible()
-    entityObj.test_functionality()
 
 
+
+
+def importLNResearchData():
+    # Import LNResearch data
+    from .data_import.ln_research import LNResearch
+    LNResearch().import_data()
+
+    # Import node aliases to main table
+    entityObj = EntityClusters()
+    entityObj.import_node_aliases_to_main_table(
+        from_table_name='_LNResearch_NodeAnnouncements',
+        from_alias_column='Alias',
+        from_node_id_column='NodeID',
+        from_timestamp_column='LastSeen'
+    )
+    entityObj.import_new_entities_to_main_table()
+    entityObj.fix_entity_hex_names_if_possible()
 
 
 

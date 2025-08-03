@@ -207,16 +207,3 @@ class EntityClusters:
                 db_conn.commit()
 
 
-
-
-
-
-    def test_functionality(self):
-
-        with get_db_connection() as db_conn:
-            with db_conn.cursor() as db_cursor:
-
-                db_cursor.execute('SELECT * FROM Lightning_Entities')
-                entities = db_cursor.fetchall()
-                for entity in entities:
-                    print(entity)
