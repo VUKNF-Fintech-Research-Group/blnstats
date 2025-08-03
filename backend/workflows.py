@@ -116,15 +116,30 @@ def import_ln_research_data():
 
 
 
-######################### WORKFLOWS #########################
 
-##### DATA IMPORT WORKFLOWS
+
+
+############################################################################
+################################## WORKFLOWS ###############################
+############################################################################
+
+
+
+
+
+
+########################## DATA IMPORT WORKFLOWS ###########################
 @flow
-def lnd_data_import_flow(file_path: str):
+def lnd_dbreader_import_flow(file_path: str):
     """Flow to import LND DBReader data."""
     return import_lnd_dbreader_data(file_path)
 
 
+@flow
+def ln_research_import_flow():
+    """Flow to import LNResearch data."""
+    return import_ln_research_data()
+############################################################################
 
 
 
@@ -132,7 +147,7 @@ def lnd_data_import_flow(file_path: str):
 
 
 
-##### BLN ANALYTICS WORKFLOW
+########################## BLN ANALYSIS WORKFLOW ###########################
 @flow
 def lightning_network_statistics_flow():
     """Complete Lightning Network statistics calculation flow."""
@@ -173,55 +188,46 @@ def lightning_network_statistics_flow():
         "lorenz_charts": lorenz_result,
         "example_lorenz": example_lorenz_result
     }
+############################################################################
 
 
 
 
 
 
-
-# Combined flows for common use cases
+######################### FULL INITIALIZATION FLOW #########################
 @flow
-def full_data_pipeline_flow(file_path: str = None):
+def full_initialization_flow():
     """Complete data pipeline: import -> calculate -> sync."""
-    # Import data if file path provided
-    import_result = None
-    if file_path:
-        import_result = import_lnd_dbreader_data(file_path)
-    
+
+    # Import LNResearch data
+    ln_research_import_result = import_ln_research_data()
+
+    # Import LND DBReader from Vilnius university Kaunas faculty data
+    lnd_dbreader_import_result = import_lnd_dbreader_data("https://blnstats.knf.vu.lt/rawdata/INPUT/lnd-dbreader-A336EEAB--latest.json.gz")
+
     # Run LN statistics calculations
     stats_results = lightning_network_statistics_flow()
     
-    # Synchronize blockchain
-    sync_result = synchronize_blockchain()
-    
     return {
-        "import": import_result,
-        "statistics": stats_results,
-        "blockchain_sync": sync_result
+        "ln_research_import": ln_research_import_result,
+        "lnd_dbreader_import": lnd_dbreader_import_result,
+        "statistics": stats_results
     }
+############################################################################
 
-
-
-
-@flow
-def blockchain_synchronization_flow():
-    """Flow to synchronize the blockchain."""
-    return synchronize_blockchain()
 
 
 
 if __name__ == "__main__":
     # Create deployments for all flows
-    ln_stats_deployment = lightning_network_statistics_flow.to_deployment(name="ln-statistics")
-    blockchain_sync_deployment = blockchain_synchronization_flow.to_deployment(name="blockchain-sync")
-    lnd_import_deployment = lnd_data_import_flow.to_deployment(name="lnd-import")
-    full_pipeline_deployment = full_data_pipeline_flow.to_deployment(name="full-pipeline")
+    ln_stats_deployment = lightning_network_statistics_flow.to_deployment(name="BLN Analysis Flow")
+    lnd_import_deployment = lnd_dbreader_import_flow.to_deployment(name="LND DBReader Import Flow")
+    full_pipeline_deployment = full_initialization_flow.to_deployment(name="Full Initialization Flow")
 
     # Serve all deployments
     serve(
         ln_stats_deployment,
-        blockchain_sync_deployment,
         lnd_import_deployment,
         full_pipeline_deployment
     )

@@ -2,13 +2,13 @@ from flask import Flask
 import os
 import gc
 from datetime import datetime
+import hashlib
+import random
 
 from .database.utils import create_database_if_not_exists, create_tables_if_not_exists
 from .database.raw_data_selector import RawDataSelector
 from .database.node_metrics_selector import NodeMetricsSelector
 from .database.entity_metrics_selector import EntityMetricsSelector
-
-from .data_import.ln_research import LNResearchData
 
 from .data_transform.entity_clusters import EntityClusters
 
@@ -31,7 +31,7 @@ logging.basicConfig(
 
 
 
-
+APP_DEBUG = os.getenv('APP_DEBUG', 'false').lower() == "true"
 
 
 def create_app():
@@ -42,7 +42,10 @@ def create_app():
     app = Flask(__name__)
     
     # Initialize extensions
-    app.secret_key = b'903aef33213b836002bf60448f3713e45ab70828d1390523f527590037402188'
+    if(APP_DEBUG):
+        app.secret_key = hashlib.sha256(datetime.now().strftime("%Y-%m-%d").encode()).digest()
+    else:
+        app.secret_key = random.randbytes(32)
     app.config['SESSION_COOKIE_HTTPONLY'] = False
 
     from .api.auth.user import login_manager
@@ -51,9 +54,10 @@ def create_app():
     
     # Register blueprints
     from .api.auth.routes import auth_bp
-
-
     app.register_blueprint(auth_bp, url_prefix='')
+    
+
+
     
     return app
 
@@ -63,11 +67,11 @@ def create_app():
 
 
 def generateCoefficientCharts(
-    subjectsOfAnalysis=["Nodes", "Entities"],
-    metricTypes=["weighted degree", "degree"],
-    coefficientTypes=["Gini", "HHI", "Theil", "Normalized Theil", "Shannon Entropy", "Normalized Shannon Entropy", "Nakamoto", 
-                    "Top 10 Percent Control Percentage", "Top 10 Percent Control Sum"]
-):
+        subjectsOfAnalysis=["Nodes", "Entities"],
+        metricTypes=["weighted degree", "degree"],
+        coefficientTypes=["Gini", "HHI", "Theil", "Normalized Theil", "Shannon Entropy", "Normalized Shannon Entropy", "Nakamoto", 
+                        "Top 10 Percent Control Percentage", "Top 10 Percent Control Sum"]
+    ):
     dateMask = '20XX-XX-01'
     
     # Chart variations
@@ -763,6 +767,9 @@ def generateGeneralStatisticsCharts():
 
 
 
+
+
+
 def compare_data_sources():
     from blnstats.data_import.compare_sources import CompareSources
     xTicksShowEndsWith = "-03-01"
@@ -771,22 +778,6 @@ def compare_data_sources():
 
 
 
-
-
-
-
-
-def test_entity_functionality():
-    entityObj = EntityClusters()
-    entityObj.import_node_aliases_to_main_table(
-        from_table_name='_LNResearch_NodeAnnouncements',
-        from_alias_column='alias',
-        from_node_id_column='node_id',
-        from_timestamp_column='timestamp'
-    )
-    entityObj.import_new_entities_to_main_table()
-    entityObj.fix_entity_hex_names_if_possible()
-    entityObj.test_functionality()
 
 
 
@@ -856,8 +847,9 @@ def synchronizeBlockchain():
 
 
 def importLNDDBReader(file_path):
-    # Import LND DBReader data
     from .data_import.lnd_dbreader import LNDDBReader
+    
+    # Import LND DBReader data
     LNDDBReader(file_path)
 
     # Import node aliases to main table
@@ -875,8 +867,9 @@ def importLNDDBReader(file_path):
 
 
 def importLNResearchData():
-    # Import LNResearch data
     from .data_import.ln_research import LNResearch
+    
+    # Import LNResearch data
     LNResearch().import_data()
 
     # Import node aliases to main table
@@ -896,9 +889,6 @@ def importLNResearchData():
 def transformNodeMetrics():
     from .data_transform.node_metrics import NodeMetrics
     nodeMetrics = NodeMetrics()
-
-    # Transformuoti vieno bloko momentą
-    nodeMetrics.transformForBlockHeight(505000)
     
-    # Transformuoti visų mėnesių pirmą bloką
+    # Transform all months first blocks
     nodeMetrics.transformForFirstBlocksOfMonths()

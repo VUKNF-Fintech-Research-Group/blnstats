@@ -5,6 +5,7 @@ import requests
 from ..database.utils import get_db_connection
 import hashlib
 import os
+import shutil
 
 
 
@@ -60,7 +61,7 @@ class LNDDBReader:
             with open(f"{file_path}.json.gz_tmp", 'wb') as file:
                 file.write(response.content)
             os.rename(f"{file_path}.json.gz_tmp", f"{file_path}.json.gz")
-            os.copy(f"{file_path}.json.gz", file_path_latest)
+            shutil.copy(f"{file_path}.json.gz", file_path_latest)
             return f"{file_path}.json.gz"
         else:
             raise ValueError(f"Unsupported file type: {self.file_path}")
