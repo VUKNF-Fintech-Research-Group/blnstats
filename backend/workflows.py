@@ -235,13 +235,13 @@ def full_initialization_flow():
 if __name__ == "__main__":
     # Create deployments for all flows
     ln_stats_deployment = lightning_network_statistics_flow.to_deployment(name="BLN Analysis Flow")
-    lnd_import_deployment = lnd_dbreader_import_flow.to_deployment(name="LND DBReader Import Flow")
+    full_lnd_dbreader_update_deployment = lnd_dbreader_full_update_flow.to_deployment(name="LND DBReader Full Update Flow")
     full_pipeline_deployment = full_initialization_flow.to_deployment(name="Full Initialization Flow")
 
     # Serve all deployments
     serve(
         ln_stats_deployment,
-        lnd_import_deployment,
+        full_lnd_dbreader_update_deployment,
         full_pipeline_deployment
     )
 
