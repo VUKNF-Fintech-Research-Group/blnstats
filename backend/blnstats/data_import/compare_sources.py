@@ -19,9 +19,9 @@ class CompareSources:
 
     def __init__(self, xTicksToGenerate, xTicksToExclude):
         general_stats = self.compare_sources(
-            source_db_table1="_LNResearch_20230924_ChannelAnnouncement",
+            source_db_table1="_LNResearch_ChannelAnnouncements",
             column_name1="short_channel_id",
-            source_db_table2="_LND_DBReader_ChannelAnnouncement",
+            source_db_table2="_LND_DBReader_ChannelAnnouncements",
             column_name2="ShortChannelID"
         )
         os.makedirs("/DATA/GENERATED/Compare_Sources/Channel_Announcements", exist_ok=True)
@@ -68,20 +68,20 @@ class CompareSources:
         with get_db_connection() as cnx:
             with cnx.cursor(dictionary=True) as cursor:
 
-                # Query for _LNResearch_20230924_ChannelAnnouncement table.
+                # Query for _LNResearch_ChannelAnnouncements table.
                 query_research = """
                     SELECT DATE_FORMAT(b.Date, '%Y-%m') AS month, COUNT(*) AS count
-                    FROM _LNResearch_20230924_ChannelAnnouncement a
+                    FROM _LNResearch_ChannelAnnouncements a
                     JOIN Blockchain_Blocks b ON a.blockchain_height = b.BlockHeight
                     WHERE b.Date >= '2018-01-01'
                     GROUP BY month
                     ORDER BY month;
                 """
                 
-                # Query for _LND_DBReader_ChannelAnnouncement table.
+                # Query for _LND_DBReader_ChannelAnnouncements table.
                 query_dbreader = """
                     SELECT DATE_FORMAT(b.Date, '%Y-%m') AS month, COUNT(*) AS count
-                    FROM _LND_DBReader_ChannelAnnouncement a
+                    FROM _LND_DBReader_ChannelAnnouncements a
                     JOIN Blockchain_Blocks b ON a.BlockIndex = b.BlockHeight
                     WHERE b.Date >= '2018-01-01'
                     GROUP BY month
@@ -92,7 +92,7 @@ class CompareSources:
                 results_dbreader = get_monthly_counts(cursor, query_dbreader)
 
 
-                print("Monthly counts for _LNResearch_20230924_ChannelAnnouncement:")
+                print("Monthly counts for _LNResearch_ChannelAnnouncements:")
                 for row in results_research:
                     print(f"{row['month']}: {row['count']}")
                     data[row['month']] = {}
@@ -100,7 +100,7 @@ class CompareSources:
 
 
 
-                print("\nMonthly counts for _LND_DBReader_ChannelAnnouncement:")
+                print("\nMonthly counts for _LND_DBReader_ChannelAnnouncements:")
                 for row in results_dbreader:
                     print(f"{row['month']}: {row['count']}")
                     # Initialize the month entry if it doesn't exist

@@ -77,3 +77,7 @@ if __name__ == "__main__":
         app = blnstats.create_app()
         app.run(host='0.0.0.0', port=8000, debug=True)
 
+
+    elif(sys.argv[1] == "--import-ln-research-data"):
+        from blnstats.data_import.ln_research import LNResearchData
+        LNResearchData()

@@ -2,12 +2,12 @@
 # Author:           Tomas Vanagas
 # Updated:          2025-03-11
 # Version:          1.0
-# Description:      User model
+# Description:      User model (MySQL)
 ############################################################
 
 
 from flask_login import UserMixin, LoginManager
-from ..database.db import get_db_connection
+from ...database.utils import get_db_connection
 
 
 login_manager = LoginManager()
@@ -28,7 +28,8 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     with get_db_connection() as conn:
-        sqlFetchData = conn.execute(''' 
+        cursor = conn.cursor(dictionary=True)  # Use dictionary=True instead of cursor_class
+        cursor.execute(''' 
             SELECT
                 ID,
                 Email,
@@ -37,19 +38,22 @@ def load_user(user_id):
             FROM
                 System_Users
             WHERE 
-                ID = ?
-        ''', [user_id]).fetchall()
+                ID = %s
+        ''', [user_id])
+        sqlFetchData = cursor.fetchall()
+        cursor.close()
         
         if len(sqlFetchData) != 1:
             return None
 
         sqlFetchData = sqlFetchData[0]
-        return User(sqlFetchData[0], sqlFetchData[1], sqlFetchData[2], sqlFetchData[3])
+        return User(sqlFetchData['ID'], sqlFetchData['Email'], sqlFetchData['Password'], sqlFetchData['Admin'])
 
 
 def get_user_by_email(email):
     with get_db_connection() as conn:
-        sqlFetchData = conn.execute(''' 
+        cursor = conn.cursor(dictionary=True)  # Use dictionary=True instead of cursor_class
+        cursor.execute(''' 
             SELECT
                 ID,
                 Email,
@@ -58,12 +62,14 @@ def get_user_by_email(email):
             FROM
                 System_Users
             WHERE 
-                Email = ?
-        ''', [email]).fetchall()
+                Email = %s
+        ''', [email])
+        sqlFetchData = cursor.fetchall()
+        cursor.close()
         
         if len(sqlFetchData) != 1:
             return None
 
         sqlFetchData = sqlFetchData[0]
-        return User(sqlFetchData[0], sqlFetchData[1], sqlFetchData[2], sqlFetchData[3])
+        return User(sqlFetchData['ID'], sqlFetchData['Email'], sqlFetchData['Password'], sqlFetchData['Admin'])
 

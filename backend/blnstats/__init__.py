@@ -3,7 +3,7 @@ import os
 import gc
 from datetime import datetime
 
-from .database.utils import create_database_if_not_exists
+from .database.utils import create_database_if_not_exists, create_tables_if_not_exists
 from .database.raw_data_selector import RawDataSelector
 from .database.node_metrics_selector import NodeMetricsSelector
 from .database.entity_metrics_selector import EntityMetricsSelector
@@ -35,6 +35,10 @@ logging.basicConfig(
 
 
 def create_app():
+    # Create Database and Tables
+    create_database_if_not_exists('lnstats')
+    create_tables_if_not_exists()
+
     app = Flask(__name__)
     
     # Initialize extensions
@@ -52,16 +56,6 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='')
     
     return app
-
-
-
-
-
-
-
-
-def set_up_database():
-    create_database_if_not_exists('lnstats')
 
 
 
@@ -785,7 +779,7 @@ def compare_data_sources():
 def test_entity_functionality():
     entityObj = EntityClusters()
     entityObj.import_node_aliases_to_main_table(
-        from_table_name='_LNResearch_20230924_NodeAnnouncement',
+        from_table_name='_LNResearch_NodeAnnouncements',
         from_alias_column='alias',
         from_node_id_column='node_id',
         from_timestamp_column='timestamp'

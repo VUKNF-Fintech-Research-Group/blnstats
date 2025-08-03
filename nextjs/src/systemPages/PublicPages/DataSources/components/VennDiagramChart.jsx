@@ -8,15 +8,15 @@ export default function VennDiagramChart({ data }) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
   
   const defaultData = {
-    "_LNResearch_20230924_ChannelAnnouncement": 0,
-    "_LND_DBReader_ChannelAnnouncement": 0,
+    "_LNResearch_ChannelAnnouncements": 0,
+    "_LND_DBReader_ChannelAnnouncements": 0,
     "overlap": 0
   };
 
   const chartData = data || defaultData;
   
-  const lnResearchTotal = chartData["_LNResearch_20230924_ChannelAnnouncement"] || 0;
-  const lndDbReaderTotal = chartData["_LND_DBReader_ChannelAnnouncement"] || 0;
+  const lnResearchTotal = chartData["_LNResearch_ChannelAnnouncements"] || 0;
+  const lndDbReaderTotal = chartData["_LND_DBReader_ChannelAnnouncements"] || 0;
   const overlapCount = chartData["overlap"] || 0;
   
   const lnResearchUnique = lnResearchTotal - overlapCount;

@@ -4,6 +4,7 @@ import gzip
 import requests
 from ..database.utils import get_db_connection
 import hashlib
+import os
 
 
 
@@ -54,14 +55,15 @@ class LNDDBReader:
         addressHashID = hashlib.sha256(url.encode()).hexdigest()[:8].upper()
         timeNow = datetime.now().strftime('%Y%m%d-%H%M%S')
         file_path = f"/DATA/INPUT/lnd-dbreader-{addressHashID}--{timeNow}"
+        file_path_latest = f"/DATA/INPUT/lnd-dbreader-{addressHashID}--latest.json.gz"
         if(self.file_path.endswith('.gz')):
-            with open(f"{file_path}.json.gz", 'wb') as file:
+            with open(f"{file_path}.json.gz_tmp", 'wb') as file:
                 file.write(response.content)
-                return f"{file_path}.json.gz"
+            os.rename(f"{file_path}.json.gz_tmp", f"{file_path}.json.gz")
+            os.copy(f"{file_path}.json.gz", file_path_latest)
+            return f"{file_path}.json.gz"
         else:
-            with open(f"{file_path}.json", 'wb') as file:
-                file.write(response.content)
-                return f"{file_path}.json"
+            raise ValueError(f"Unsupported file type: {self.file_path}")
 
 
 
@@ -79,7 +81,7 @@ class LNDDBReader:
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS `_LND_DBReader_ChannelAnnouncement` (
+                    CREATE TABLE IF NOT EXISTS `_LND_DBReader_ChannelAnnouncements` (
                         `ShortChannelID` BIGINT NOT NULL,
                         `BlockIndex` INT NOT NULL,
                         `TxIndex` INT NOT NULL,
@@ -120,7 +122,7 @@ class LNDDBReader:
     def import_data(self):
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
-                print("[*] Inserting channel announcements into _LND_DBReader_ChannelAnnouncement table (INSERT OR IGNORE)")
+                print("[*] Inserting channel announcements into _LND_DBReader_ChannelAnnouncements table (INSERT OR IGNORE)")
                 for item in self.data['channel_announcements']:
 
                     short_channel_id = item['ShortChannelID']
@@ -132,7 +134,7 @@ class LNDDBReader:
                     node_id_2 = item['NodeID2']
 
                     cursor.execute('''
-                        INSERT IGNORE INTO _LND_DBReader_ChannelAnnouncement 
+                        INSERT IGNORE INTO _LND_DBReader_ChannelAnnouncements 
                             (ShortChannelID, BlockIndex, TxIndex, OutputIndex, NodeID1, NodeID2) VALUES (%s, %s, %s, %s, %s, %s)
                     ''', (short_channel_id, block_height, tx_index, output_index, node_id_1, node_id_2))
                 conn.commit()
@@ -179,7 +181,7 @@ class LNDDBReader:
             with conn.cursor() as cursor:
                 cursor.execute('''
                     INSERT IGNORE INTO Lightning_Channels 
-                    (ShortChannelID, BlockIndex, TxIndex, OutputIndex, NodeID1, NodeID2)
+                        (ShortChannelID, BlockIndex, TxIndex, OutputIndex, NodeID1, NodeID2)
                     SELECT 
                         ca.ShortChannelID,
                         ca.BlockIndex,
@@ -187,7 +189,7 @@ class LNDDBReader:
                         ca.OutputIndex,
                         ca.NodeID1,
                         ca.NodeID2
-                    FROM _LND_DBReader_ChannelAnnouncement ca
+                    FROM _LND_DBReader_ChannelAnnouncements ca
                 ''')
                 conn.commit()
 
