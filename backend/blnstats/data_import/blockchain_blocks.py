@@ -14,6 +14,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+
+
+
 class BlockSyncError(Exception):
     """Exception raised when blocks fail to sync after all retry attempts."""
     
@@ -27,9 +30,9 @@ class BlockSyncError(Exception):
         super().__init__(message)
 
 
-def send_electrum_request(server_ip: str, server_port: int, method: str, params: list):
-    try:
 
+def __send_electrum_request(server_ip: str, server_port: int, method: str, params: list):
+    try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(10)
         s.connect((server_ip, server_port))
@@ -93,7 +96,7 @@ def retrieve_and_write_blockchain_block(args):
     electrum_port = electrum_credentials['port']
 
     try:
-        raw_header = send_electrum_request(electrum_host, electrum_port, 'blockchain.block.header', [height])
+        raw_header = __send_electrum_request(electrum_host, electrum_port, 'blockchain.block.header', [height])
         if not raw_header:
             logger.error(f"Could not retrieve header for block {height}")
             return (height, False, "Could not retrieve header")
@@ -154,29 +157,30 @@ class BlockchainBlocks:
         self.electrum_host = electrum_host
         self.electrum_port = electrum_port
 
-        with get_db_connection() as db_conn:
-            with db_conn.cursor() as db_cursor:
-                self.__create_tables_if_not_exist(db_cursor)
+        self.__create_tables_if_not_exist()
 
 
 
-    def __create_tables_if_not_exist(self, db_cursor):
+
+    def __create_tables_if_not_exist(self):
         """
         Creates the Blockchain_Blocks table if it does not exist.
         """
-        db_cursor.execute('''
-            CREATE TABLE IF NOT EXISTS `Blockchain_Blocks` (
-                `BlockHeight` INT UNSIGNED NOT NULL UNIQUE,
-                `BlockHash` CHAR(64) NOT NULL,
-                `Timestamp` INT UNSIGNED NOT NULL,
-                `Time` DATETIME NOT NULL,
-                `Date` DATE NOT NULL,
-                PRIMARY KEY (`BlockHeight`),
-                INDEX `idx_BlockHash` (`BlockHash`),
-                INDEX `idx_Timestamp` (`Timestamp`),
-                INDEX `idx_Date` (`Date`)
-            );
-        ''')
+        with get_db_connection() as db_conn:
+            with db_conn.cursor() as db_cursor:
+                db_cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS `Blockchain_Blocks` (
+                        `BlockHeight` INT UNSIGNED NOT NULL UNIQUE,
+                        `BlockHash` CHAR(64) NOT NULL,
+                        `Timestamp` INT UNSIGNED NOT NULL,
+                        `Time` DATETIME NOT NULL,
+                        `Date` DATE NOT NULL,
+                        PRIMARY KEY (`BlockHeight`),
+                        INDEX `idx_BlockHash` (`BlockHash`),
+                        INDEX `idx_Timestamp` (`Timestamp`),
+                        INDEX `idx_Date` (`Date`)
+                    );
+                ''')
 
 
 
@@ -187,7 +191,7 @@ class BlockchainBlocks:
         :raises BlockSyncError: If any blocks fail to sync after all retry attempts
         """
         # Get the latest block height from the Electrum server
-        latest_header = send_electrum_request(self.electrum_host, self.electrum_port, 'blockchain.headers.subscribe', [])
+        latest_header = __send_electrum_request(self.electrum_host, self.electrum_port, 'blockchain.headers.subscribe', [])
         if not latest_header:
             logger.error("Could not get latest block from Electrum server.")
             raise BlockSyncError({}, 0)
