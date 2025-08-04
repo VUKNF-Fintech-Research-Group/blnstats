@@ -8,6 +8,11 @@ A comprehensive analytics platform for Bitcoin Lightning Network (BLN) statistic
 
 BLN Statistics is a multi-service application that collects, processes, and visualizes Bitcoin Lightning Network data. It provides advanced statistical analysis including centralization coefficients, Lorenz curves, network topology metrics, and comparative data source analysis.
 
+
+<img width="1139" height="910" alt="Screenshot 2025-08-04 at 14 24 21" src="https://github.com/user-attachments/assets/fbac735e-cf40-4ab8-aafd-0385410df58b" />
+
+
+
 ### Key Features
 
 - **Network Analysis**: Comprehensive Lightning Network topology analysis
