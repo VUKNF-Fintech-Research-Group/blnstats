@@ -31,7 +31,7 @@ class BlockSyncError(Exception):
 
 
 
-def __send_electrum_request(server_ip: str, server_port: int, method: str, params: list):
+def send_electrum_request(server_ip: str, server_port: int, method: str, params: list):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(10)
@@ -96,7 +96,7 @@ def retrieve_and_write_blockchain_block(args):
     electrum_port = electrum_credentials['port']
 
     try:
-        raw_header = __send_electrum_request(electrum_host, electrum_port, 'blockchain.block.header', [height])
+        raw_header = send_electrum_request(electrum_host, electrum_port, 'blockchain.block.header', [height])
         if not raw_header:
             logger.error(f"Could not retrieve header for block {height}")
             return (height, False, "Could not retrieve header")
@@ -191,7 +191,7 @@ class BlockchainBlocks:
         :raises BlockSyncError: If any blocks fail to sync after all retry attempts
         """
         # Get the latest block height from the Electrum server
-        latest_header = __send_electrum_request(self.electrum_host, self.electrum_port, 'blockchain.headers.subscribe', [])
+        latest_header = send_electrum_request(self.electrum_host, self.electrum_port, 'blockchain.headers.subscribe', [])
         if not latest_header:
             logger.error("Could not get latest block from Electrum server.")
             raise BlockSyncError({}, 0)
