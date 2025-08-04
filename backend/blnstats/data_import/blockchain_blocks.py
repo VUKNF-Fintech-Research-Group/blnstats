@@ -28,35 +28,49 @@ class BlockSyncError(Exception):
 
 
 def send_electrum_request(server_ip: str, server_port: int, method: str, params: list):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((server_ip, server_port))
+    try:
 
-    request = {
-        "id": 0,
-        "method": method,
-        "params": params
-    }
-    request_str = json.dumps(request) + '\n'
-    s.sendall(request_str.encode())
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(10)
+        s.connect((server_ip, server_port))
 
-    chunks = []
-    while True:
-        chunk = s.recv(4096)
-        if not chunk:
-            break
-        chunks.append(chunk)
-        if b'\n' in chunk:
-            break
-    s.close()
+        request = {
+            "id": 0,
+            "method": method,
+            "params": params
+        }
+        request_str = json.dumps(request) + '\n'
+        s.sendall(request_str.encode())
 
-    response = b''.join(chunks).decode()
-    response_json = json.loads(response)
+        chunks = []
+        while True:
+            chunk = s.recv(4096)
+            if not chunk:
+                break
+            chunks.append(chunk)
+            if b'\n' in chunk:
+                break
+        s.close()
+
+        # Construct response and parse as JSON
+        response = b''.join(chunks).decode()
+        response_json = json.loads(response)
+        
+        # Safely check for errors
+        if isinstance(response_json, dict) and 'error' in response_json and response_json['error']:
+            error_info = response_json['error']
+            if isinstance(error_info, dict) and 'message' in error_info:
+                logger.error(f"Error from Electrum server for method {method}: {error_info['message']}")
+            else:
+                logger.error(f"Error from Electrum server for method {method}: {error_info}")
+            return None
+
+        return response_json.get('result') if isinstance(response_json, dict) else response_json
     
-    if 'error' in response_json and response_json['error']:
-        logger.error(f"Error from Electrum server: {response_json['error']['message']}")
+    except Exception as e:
+        logger.error(f"Network error calling Electrum method {method}: {e}")
         return None
 
-    return response_json.get('result')
 
 
 def get_block_hash_from_header(header_hex: str) -> str:
@@ -64,6 +78,7 @@ def get_block_hash_from_header(header_hex: str) -> str:
     hash1 = hashlib.sha256(header_bytes).digest()
     hash2 = hashlib.sha256(hash1).digest()
     return hash2[::-1].hex()
+
 
 
 def retrieve_and_write_blockchain_block(args):
@@ -185,8 +200,8 @@ class BlockchainBlocks:
 
         processes = 4  # Number of worker processes
         batch_size = 10000  # Number of blocks to process in each batch
-        max_retries = 10  # Maximum number of retries for failed blocks
-        retry_delay = 15  # Delay in seconds before retrying failed blocks
+        max_retries = 120  # Maximum number of retries for failed blocks
+        retry_delay = 60  # Delay in seconds before retrying failed blocks
         
         # Track overall sync results
         all_failed_blocks = {}  # height -> error_message
