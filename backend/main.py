@@ -3,27 +3,52 @@ import sys
 
 
 
+
+
+
 if __name__ == "__main__":
+
 
     if(len(sys.argv) == 1):
         print("Usage: python main.py <command>")
         print("")
         print("Commands:")
-        print("  --init-db                      Initialize the database")
+        print("  --import-ln-research-data      Import LN Research data")
+        print("  --import-lnd-dbreader-data     Import LND DBReader data")
+        print("  --sync-blockchain              Synchronize the blockchain")
         print("  --calculate-ln-stats           Calculate Lightning Network statistics")
-        print("  --synchronize-blockchain       Synchronize the blockchain")
+        print("")
         print("  --serve-api                    Serve the backend API")
         print("")
-        print("Example: python main.py --init-db")
+        print("Example: python main.py --sync-blockchain")
         print("")
         print("")
 
 
 
+    elif(sys.argv[1] == "--import-ln-research-data"):
+        from blnstats.data_import.ln_research import LNResearchData
+        LNResearchData()
 
-    elif(sys.argv[1] == "--init-db"):
-        blnstats.set_up_database()
 
+
+    elif(sys.argv[1] == "--import-lnd-dbreader-data"):
+        if(len(sys.argv) == 3):
+            blnstats.importLNDDBReader(sys.argv[2])
+        else:
+            print("Error: Invalid number of arguments")
+            print()
+            print("Usage: python3 main.py --import-lnd-dbreader-data <file_path>")
+            print()
+            print("Examples:")
+            print("    python3 main.py --import-lnd-dbreader-data http://192.168.1.2/rawdata/lnd-dbreader.json.gz")
+            print("    python3 main.py --import-lnd-dbreader-data /DATA/INPUT/lnd-dbreader-20250101-123456.json.gz")
+            print("")
+
+
+
+    elif(sys.argv[1] == "--sync-blockchain"):
+        blnstats.synchronizeBlockchain()
 
 
 
@@ -49,32 +74,6 @@ if __name__ == "__main__":
         blnstats.generateLorenzCharts()
         blnstats.generateExampleLorenzCharts()
 
-        
-
-
-
-    elif(sys.argv[1] == "--sync-blockchain"):
-        blnstats.synchronizeBlockchain()
-
-
-
-
-    elif(sys.argv[1] == "--import-lnd-dbreader-data"):
-        if(len(sys.argv) == 3):
-            blnstats.importLNDDBReader(sys.argv[2])
-        else:
-            print("Error: Invalid number of arguments")
-            print()
-            print("Usage: python3 main.py --import-lnd-dbreader-data <file_path>")
-            print()
-            print("Examples:")
-            print("    python3 main.py --import-lnd-dbreader-data http://192.168.1.2/rawdata/lnd-dbreader.json.gz")
-            print("    python3 main.py --import-lnd-dbreader-data /DATA/INPUT/lnd-dbreader-20250101-123456.json.gz")
-            print("")
-
-    elif(sys.argv[1] == "--import-ln-research-data"):
-        blnstats.importLNResearchData()
-
 
 
     elif(sys.argv[1] == "--serve-api"):
@@ -82,6 +81,3 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=8000, debug=True)
 
 
-    elif(sys.argv[1] == "--import-ln-research-data"):
-        from blnstats.data_import.ln_research import LNResearchData
-        LNResearchData()

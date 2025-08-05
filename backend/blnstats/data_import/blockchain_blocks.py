@@ -3,7 +3,7 @@ import socket
 import json
 import hashlib
 import time
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
 from ..database.utils import get_db_connection
 from datetime import datetime
 from dataclasses import dataclass
@@ -244,7 +244,7 @@ class BlockchainBlocks:
                 tasks = [(height, electrum_credentials) for height in blocks_to_process]
                 
                 try:
-                    with Pool(processes=processes) as pool:
+                    with ThreadPool(processes) as pool:
                         results = pool.map(retrieve_and_write_blockchain_block, tasks)
                     
                     # Process results and identify failed blocks

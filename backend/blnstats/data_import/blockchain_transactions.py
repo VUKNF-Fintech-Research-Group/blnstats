@@ -4,7 +4,7 @@ import hashlib
 import time
 import logging
 from decimal import Decimal
-from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
 from ..database.utils import get_db_connection
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
@@ -559,7 +559,7 @@ class BlockchainTransactions:
                     
                     while transactions_to_process and retry_count < max_retries:
                         try:
-                            with Pool(processes=10) as pool:
+                            with ThreadPool(10) as pool:
                                 results = pool.map(self.retrieveAndWriteLightningBlockchainTxData, transactions_to_process)
                             
                             # Process results and identify failed transactions

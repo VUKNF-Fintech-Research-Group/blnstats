@@ -1,8 +1,6 @@
+# Installation specific config files
 docker-compose.yml
 .env
-
-# OLD stuff
-OLD
 
 # Generated BLN data
 DATA

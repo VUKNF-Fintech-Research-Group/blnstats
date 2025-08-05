@@ -1,5 +1,4 @@
 from prefect import flow, task, serve
-from prefect.states import Completed
 import blnstats
 
 
@@ -92,7 +91,7 @@ def synchronize_blockchain():
     print("Synchronizing blockchain...")
     blnstats.synchronizeBlockchain()
     print("Blockchain synchronization completed.")
-    return Completed("Blockchain synchronized")
+    return "Blockchain synchronized"
 
 
 # Data Import Tasks
