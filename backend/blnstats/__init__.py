@@ -13,7 +13,7 @@ from .database.entity_metrics_selector import EntityMetricsSelector
 from .data_transform.entity_clusters import EntityClusters
 
 from .calculations.coefficients import Coefficients
-from .calculations.general_stats import GeneralStats
+
 
 from .charts.chart_generator import BaseChartGenerator, LorenzCurveChartGenerator
 
@@ -639,8 +639,12 @@ def generateGeneralStatisticsCharts():
     vertices_channel_count_data =   NodeMetricsSelector().get_channel_count_metrics(firstBlocksOfMoths)
 
     # Calculate General Stats
+    from .calculations.general_stats import GeneralStats
     general_stats_data = GeneralStats().calculate(vertices_capacity_data, vertices_channel_count_data)
     general_stats_data.save_to_file(f'/DATA/GENERATED/General_Stats/{dateMask}.json')
+
+    # Calculate Channel Lifetime Plot
+    GeneralStats().calculate_channel_lifetime_plot()
 
 
     # Prepare data for charts

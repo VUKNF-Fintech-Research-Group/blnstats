@@ -1,6 +1,8 @@
 from datetime import datetime
 from ..data_types import VerticesAspectDataStructure, GeneralStatsDataStructure
-
+from ..database.utils import get_db_connection
+import json
+import os
 
 
 class GeneralStats:
@@ -46,9 +48,6 @@ class GeneralStats:
                 for vertices_entry in vertices_channel_count_data.data.values()]
         
 
-
-
-
         general_stats_data = GeneralStatsDataStructure(
             meta={
                 "type": "GeneralStatsDataStructure",
@@ -79,7 +78,123 @@ class GeneralStats:
 
 
 
+    def calculate_channel_lifetime_plot(self):
+        '''
+        This method calculates distribution of channel lifetimes.
+        X axis: Channel lifetime in days
+        Y axis: Number of channels
+        '''
+        with get_db_connection() as db_conn:
+            with db_conn.cursor(dictionary=True) as db_cursor:
+                query = '''
+                    SELECT 
+                        CASE 
+                            WHEN BT.SpendingBlockIndex = 999999999 THEN 
+                                (SELECT MAX(BlockHeight) FROM Blockchain_Blocks) - BT.FundingBlockIndex
+                            ELSE 
+                                BT.SpendingBlockIndex - BT.FundingBlockIndex
+                        END AS ChannelLifetime
+                    FROM 
+                        Lightning_Channels LC
+                    LEFT JOIN Blockchain_Transactions BT
+                        ON LC.ShortChannelID = BT.ShortChannelID
+                    WHERE
+                        BT.FundingBlockIndex IS NOT NULL AND 
+                        BT.SpendingBlockIndex IS NOT NULL AND
+                        (BT.SpendingBlockIndex > BT.FundingBlockIndex OR BT.SpendingBlockIndex = 999999999)
+                '''
+                db_cursor.execute(query)
+                results = db_cursor.fetchall()
+                
+                # Extract channel lifetimes and convert to days (assuming blocks per day conversion)
+                # Note: You may need to adjust the blocks_per_day conversion based on your blockchain
+                blocks_per_day = 144  # Typical for Bitcoin, adjust as needed
+                lifetimes_days = [row['ChannelLifetime'] / blocks_per_day for row in results if row['ChannelLifetime'] is not None]
+                
+                # Create histogram bins - group by day ranges
+                from collections import Counter
+                import math
+                
+                # Round to nearest day and count occurrences
+                lifetime_counts = Counter(math.floor(lifetime) for lifetime in lifetimes_days if lifetime >= 0)
+                
+                # Create sorted list of (lifetime_days, count) pairs
+                total_channel_count = 0
+                plot_data = {}
+                if lifetime_counts:
+                    max_lifetime = max(lifetime_counts.keys())
+                    for day in range(0, max_lifetime + 1):
+                        count = lifetime_counts.get(day, 0)
+                        if count > 0:  # Only include days that have channels
+                            plot_data[day] = {
+                                'lifetime_days': day,
+                                'channel_count': count
+                            }
+                            total_channel_count += count
+                
+                print(total_channel_count)
+
+                data = {
+                    'meta': {
+                        'type': 'ChannelLifetimePlot',
+                        'description': 'Distribution of Lightning channel lifetimes',
+                        'updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'xAxis': 'Channel lifetime (days)',
+                        'yAxis': 'Number of channels',
+                        'total_channels': len(lifetimes_days)
+                    },
+                    'data': plot_data
+                }
+                
+                os.makedirs('/DATA/GENERATED/General_Stats/Channel_Lifetime', exist_ok=True)
+                with open('/DATA/GENERATED/General_Stats/Channel_Lifetime/channel_lifetime_plot.json', 'w') as f:
+                    json.dump(data, f, indent=4)
 
 
 
 
+    def calculate_channel_lifetime_average(self):
+        with get_db_connection() as db_conn:
+            with db_conn.cursor(dictionary=True) as db_cursor:
+                query = '''
+                    SELECT 
+                        AVG(
+                            CASE 
+                                WHEN BT.SpendingBlockIndex = 999999999 THEN 
+                                    (SELECT MAX(BlockHeight) FROM Blockchain_Blocks) - BT.FundingBlockIndex
+                                ELSE 
+                                    BT.SpendingBlockIndex - BT.FundingBlockIndex
+                            END
+                        ) AS AverageChannelLifetime
+                    FROM 
+                        Lightning_Channels LC
+                    LEFT JOIN Blockchain_Transactions BT
+                        ON LC.ShortChannelID = BT.ShortChannelID
+                    WHERE
+                        BT.FundingBlockIndex IS NOT NULL AND 
+                        BT.SpendingBlockIndex IS NOT NULL
+                '''
+                db_cursor.execute(query)
+                result = db_cursor.fetchone()
+                print(result['AverageChannelLifetime'])
+
+                # Convert Decimal to float for JSON serialization
+                avg_lifetime = float(result['AverageChannelLifetime']) if result['AverageChannelLifetime'] is not None else 0
+
+                data = {
+                    'meta': {
+                        'type': 'ChannelLifetimeAverage',
+                        'description': 'Average channel lifetime',
+                        'updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'average_channel_lifetime': avg_lifetime
+                    },
+                    'data': {
+                        'average_channel_lifetime_blocks': avg_lifetime,
+                        'average_channel_lifetime_days': avg_lifetime / 144
+                    }
+                }
+
+                os.makedirs('/DATA/GENERATED/General_Stats/Channel_Lifetime', exist_ok=True)
+                with open('/DATA/GENERATED/General_Stats/Channel_Lifetime/channel_lifetime_average.json', 'w') as f:
+                    json.dump(data, f, indent=4)
+                return result['AverageChannelLifetime']

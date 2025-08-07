@@ -81,3 +81,12 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=8000, debug=True)
 
 
+    elif(sys.argv[1] == "--calculate-channel-lifetime-plot"):
+        from blnstats.calculations.general_stats import GeneralStats
+        GeneralStats().calculate_channel_lifetime_plot()
+
+
+    elif(sys.argv[1] == "--calculate-channel-lifetime-average"):
+        from blnstats.calculations.general_stats import GeneralStats
+        GeneralStats().calculate_channel_lifetime_average()
+

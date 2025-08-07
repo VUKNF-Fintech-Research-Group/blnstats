@@ -21,6 +21,8 @@ import GeneralChart from './components/GeneralChart';
 export default function Home({ authData }) {
 
   const [rawData, setRawData] = useState(null);
+  const [channelLifetimePlot, setChannelLifetimePlot] = useState(null);
+  
   useEffect(() => {
     async function getData() {
       try {
@@ -28,7 +30,18 @@ export default function Home({ authData }) {
         setRawData(response.data);
       } catch (error) {}
     }
+
+    // async function getChannelLifetimePlot() {
+    //   try {
+    //     const response = await axios.get(`/rawdata/GENERATED/General_Stats/Channel_Lifetime/channel_lifetime_plot.json`);
+    //     setChannelLifetimePlot(response.data);
+    //   } catch (error) {}
+    // }
+
+
+
     getData();
+    // getChannelLifetimePlot();
   }, []);
 
 
@@ -148,10 +161,20 @@ export default function Home({ authData }) {
 
 
           {/* Divider */}
-          <div className="w-full border-t border-gray-300 m-8"></div>
+          {/* <div className="w-full border-t border-gray-300 m-8"></div> */}
 
-          
-
+          {/* Channel Lifetime Plot */}
+          {/* <div className="w-full px-4">
+            <GeneralChart
+              title="Distribution of Lightning channel ages"
+              xAxisLabel="Channel age (days)"
+              yAxisLabel="Number of Channels"
+              data={channelLifetimePlot}
+              dataKey="channel_count"
+              height={400}
+              xAxisType="number"
+            />
+          </div> */}
         </div>
       )}
     </PublicPageLayout>

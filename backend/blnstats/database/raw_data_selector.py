@@ -160,7 +160,7 @@ class RawDataSelector:
                     SELECT NodeID, SUM(Value) AS NodeValue FROM (
                         SELECT LC.NodeID1 AS NodeID, BT.Value AS Value
                         FROM Lightning_Channels LC
-                        JOIN Blockchain_Transactions BT 
+                        JOIN Blockchain_Transactions BT
                           ON LC.ShortChannelID = BT.ShortChannelID
                         WHERE BT.FundingBlockIndex <= %s
                           AND BT.SpendingBlockIndex > %s

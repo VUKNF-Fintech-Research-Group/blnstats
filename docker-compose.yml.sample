@@ -143,6 +143,9 @@ services:
     build:
       context: ./filebrowser
       dockerfile: Dockerfile
+      args:
+        - FILEBROWSER_TITLE=BLN Stats Data
+        - FILEBROWSER_BASE_URL=/filebrowser
     read_only: false
     volumes:
       - ./DATA:/data

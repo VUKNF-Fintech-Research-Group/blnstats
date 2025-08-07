@@ -31,7 +31,7 @@ The application consists of several Docker containers orchestrated via Docker Co
 
 | Service | Technology | Purpose |
 |---------|------------|---------|
-| **NextJS** | Next.js + Material-UI | Web interface and data visualization |
+| **WEB UI** | Next.js + Material-UI | Web interface and data visualization |
 | **Backend** | Python Flask | REST API and data processing |
 | **Database** | MySQL | Lightning Network data storage |
 | **Workflow Engine** | Prefect | Data pipeline orchestration |
@@ -72,6 +72,9 @@ After docker finishes starting services open your server IP address using WEB br
 ```
 http://<ubuntu-server-ip-address-here>:80
 ```
+And login into WEB UI using default credentials:
+- User: admin@admin.com
+- Pass: admin
 
 ## 🔗 External Dependencies
 

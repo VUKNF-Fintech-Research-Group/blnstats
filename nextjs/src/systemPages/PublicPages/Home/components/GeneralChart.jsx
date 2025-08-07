@@ -20,13 +20,11 @@ const formatNodeCount = (value) => `${value.toLocaleString()} nodes`;
 
 
 // Custom tooltip component
-const CustomTooltip = ({ active, payload, dataKey }) => {
+const CustomTooltip = ({ active, payload, dataKey, data }) => {
   const theme = useTheme();
 
-
-
   if (active && payload && payload.length) {
-    const data = payload[0].payload;
+    const dataPoint = payload[0].payload;
     const value = payload[0].value;
     
     // Format value based on data type
@@ -39,16 +37,31 @@ const CustomTooltip = ({ active, payload, dataKey }) => {
       return val.toLocaleString();
     };
 
+    // Handle ChannelLifetimePlot data
+    if (data?.meta?.type === 'ChannelLifetimePlot') {
+      return (
+        <div className="bg-gray-800 text-white p-3 rounded-lg shadow-lg border border-gray-600">
+          <div className="font-semibold mb-1" style={{ color: theme.palette.primary.accent }}>
+            {dataPoint.lifetime_days} days
+          </div>
+          <div className="text-lg font-bold">
+            {formatValue(value)}
+          </div>
+        </div>
+      );
+    }
+
+    // Handle GeneralStatsDataStructure data
     return (
       <div className="bg-gray-800 text-white p-3 rounded-lg shadow-lg border border-gray-600">
         <div className="font-semibold mb-1" style={{ color: theme.palette.primary.accent }}>
-          {data.date}  {/* Use the date field directly (already in YYYY-MM-DD format) */}
+          {dataPoint.date}
         </div>
         <div className="text-lg font-bold">
           {formatValue(value)}
         </div>
         <div className="text-xs text-gray-300 mt-1">
-          Block: {data.blockHeight}
+          Block: {dataPoint.blockHeight}
         </div>
       </div>
     );
@@ -73,7 +86,7 @@ const formatYAxisTick = (value) => {
 
 
 
-export default function GeneralChart({ data, height = 400, title, dataKey, yAxisLabel }) {
+export default function GeneralChart({ data, height = 400, title, dataKey, yAxisLabel, xAxisLabel}) {
   const theme = useTheme();
 
 
@@ -81,6 +94,17 @@ export default function GeneralChart({ data, height = 400, title, dataKey, yAxis
   const chartData = useMemo(() => {
     if (!data?.data) return [];
     
+    // Check if this is ChannelLifetimePlot data
+    if (data.meta?.type === 'ChannelLifetimePlot') {
+      return Object.entries(data.data)
+        .map(([key, entry]) => ({
+          lifetime_days: entry.lifetime_days,
+          [dataKey]: entry[dataKey],
+        }))
+        .sort((a, b) => a.lifetime_days - b.lifetime_days);
+    }
+    
+    // Default handling for GeneralStatsDataStructure
     return Object.entries(data.data)
       .map(([blockHeight, entry]) => ({
         blockHeight,
@@ -89,13 +113,18 @@ export default function GeneralChart({ data, height = 400, title, dataKey, yAxis
         [dataKey]: entry[dataKey],
       }))
       .sort((a, b) => a.timestamp - b.timestamp);
-  }, [data]);
+  }, [data, dataKey]);
 
 
 
 
   const formatXAxisTick = (tickItem) => {
-    // Find the corresponding date from chartData
+    // Handle ChannelLifetimePlot data
+    if (data?.meta?.type === 'ChannelLifetimePlot') {
+      return `${tickItem}d`;
+    }
+    
+    // Handle GeneralStatsDataStructure data
     const dataPoint = chartData.find(item => item.timestamp === tickItem);
     if (dataPoint && dataPoint.date) {
       return dataPoint.date.substring(0, 7); // Extract YYYY-MM from YYYY-MM-DD
@@ -158,9 +187,9 @@ export default function GeneralChart({ data, height = 400, title, dataKey, yAxis
               strokeOpacity={0.6}
             />
             <XAxis
-              dataKey="timestamp"
-              type="number"
-              scale="time"
+              dataKey={data?.meta?.type === 'ChannelLifetimePlot' ? "lifetime_days" : "timestamp"}
+              type={data?.meta?.type === 'ChannelLifetimePlot' ? 'number' : 'time'}
+              scale={data?.meta?.type === 'ChannelLifetimePlot' ? 'linear' : 'time'}
               domain={['dataMin', 'dataMax']}
               tickFormatter={formatXAxisTick}
               stroke="#64748b"
@@ -181,7 +210,7 @@ export default function GeneralChart({ data, height = 400, title, dataKey, yAxis
               }}
             />
             <Tooltip
-              content={<CustomTooltip dataKey={dataKey} />}
+              content={<CustomTooltip dataKey={dataKey} data={data} />}
               cursor={{
                 stroke: theme.palette.primary.main,
                 strokeWidth: 1,
@@ -203,9 +232,9 @@ export default function GeneralChart({ data, height = 400, title, dataKey, yAxis
               }}
             />
             
-            {/* Brush for time range selection */}
+            {/* Brush for range selection */}
             <Brush
-              dataKey="timestamp"
+              dataKey={data?.meta?.type === 'ChannelLifetimePlot' ? "lifetime_days" : "timestamp"}
               height={20}
               stroke={theme.palette.primary.main}
               fill="#f8fafc"
