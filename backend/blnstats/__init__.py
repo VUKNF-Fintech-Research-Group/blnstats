@@ -55,6 +55,8 @@ def create_app():
     # Register blueprints
     from .api.auth.routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix='')
+    from .api.settings.routes import settings_bp
+    app.register_blueprint(settings_bp, url_prefix='')
     
 
 

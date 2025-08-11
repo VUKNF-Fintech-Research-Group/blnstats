@@ -143,13 +143,28 @@ def create_tables_if_not_exists():
                     PRIMARY KEY (`ID`)
                 );
             ''')
-
             # Insert Default User if table is empty
             cursor.execute('SELECT COUNT(*) FROM System_Users')
             result = cursor.fetchone()[0]
             if result == 0:
                 cursor.execute('INSERT INTO System_Users (Email, Password, Admin, Enabled) VALUES (%s,%s,%s,%s)',
                                ('admin@admin.com', '$2a$12$/ZIb.Mw5ZEPlPdqNkC3A3.O9hySEuhrt2FpaU9y1iMWVVW4RYTIW2', 1, 1))
+                
+
+
+            # System Settings Table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS `System_Settings` (
+                    `Key` VARCHAR(255) NOT NULL UNIQUE,
+                    `Value` VARCHAR(255) DEFAULT NULL,
+                    PRIMARY KEY (`Key`)
+                );
+            ''')
+            # Insert Default Settings
+            cursor.execute('INSERT IGNORE INTO System_Settings (`Key`, `Value`) VALUES (%s,%s)',
+                            ('InitialSyncCompleted', '0'))
+            cursor.execute('INSERT IGNORE INTO System_Settings (`Key`, `Value`) VALUES (%s,%s)',
+                            ('LND-DBReader-Source-1', 'https://blnstats.knf.vu.lt/rawdata/INPUT/lnd-dbreader-A336EEAB--latest.json.gz'))
             conn.commit()
 
 
