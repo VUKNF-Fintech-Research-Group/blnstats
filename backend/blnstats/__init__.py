@@ -1,4 +1,6 @@
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 import os
 import gc
 from datetime import datetime
@@ -9,15 +11,9 @@ from .database.utils import create_database_if_not_exists, create_tables_if_not_
 from .database.raw_data_selector import RawDataSelector
 from .database.node_metrics_selector import NodeMetricsSelector
 from .database.entity_metrics_selector import EntityMetricsSelector
-
 from .data_transform.entity_clusters import EntityClusters
-
 from .calculations.coefficients import Coefficients
-
-
 from .charts.chart_generator import BaseChartGenerator, LorenzCurveChartGenerator
-
-
 
 import logging
 
@@ -35,19 +31,28 @@ APP_DEBUG = os.getenv('APP_DEBUG', 'false').lower() == "true"
 
 
 def create_app():
-    # Create Database and Tables
+
+    # Initialize database
     create_database_if_not_exists('lnstats')
     create_tables_if_not_exists()
 
+
+    ###### Flask App Initialization ######
     app = Flask(__name__)
+
+    # Trust X-Forwarded-For headers from reverse proxy
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     
-    # Initialize extensions
+
+    # Initialize Flask extensions
     if(APP_DEBUG):
         app.secret_key = hashlib.sha256(datetime.now().strftime("%Y-%m-%d").encode()).digest()
     else:
         app.secret_key = random.randbytes(32)
     app.config['SESSION_COOKIE_HTTPONLY'] = False
 
+
+    # Initialize Flask login manager
     from .api.auth.user import login_manager
     login_manager.init_app(app)
 
@@ -55,6 +60,7 @@ def create_app():
     # Register blueprints
     from .api.auth.routes import auth_bp
     app.register_blueprint(auth_bp, url_prefix='')
+    
     from .api.settings.routes import settings_bp
     app.register_blueprint(settings_bp, url_prefix='')
     
