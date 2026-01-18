@@ -33,32 +33,26 @@ services:
 
 
 
-  # Main application frontend
+  # Frontend (From Docker Hub)
   blnstats-nextjs:
     container_name: blnstats-nextjs
-    image: blnstats-nextjs
-    build:
-      context: ./nextjs
-      dockerfile: Dockerfile.prod
-      args:
-        API_INTERNAL: http://blnstats-backend:8000
+    image: vuknf/blnstats-nextjs:latest
+    read_only: true
     environment:
       - API_INTERNAL=http://blnstats-backend:8000
     restart: unless-stopped
 
 
 
-  # Backend
+  # Backend (From Docker Hub)
   blnstats-backend:
     container_name: blnstats-backend
-    image: blnstats-backend
+    image: vuknf/blnstats-backend:latest
     read_only: false
-    build: ./backend
     tmpfs:
       - /.config/matplotlib:uid=1000,gid=1000
     volumes:
-      # - /etc/localtime:/etc/localtime:ro      # OPTIONAL: Use local time
-      - ./backend:/app
+      # - /etc/localtime:/etc/localtime:ro                          # OPTIONAL: Use local time
       - ./DATA:/DATA
     <<: *common-envs
     restart: unless-stopped
