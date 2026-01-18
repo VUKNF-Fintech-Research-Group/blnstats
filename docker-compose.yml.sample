@@ -133,13 +133,7 @@ services:
   # File browser for administrators
   blnstats-filebrowser:
     container_name: blnstats-filebrowser
-    image: blnstats-filebrowser
-    build:
-      context: ./filebrowser
-      dockerfile: Dockerfile
-      args:
-        - FILEBROWSER_TITLE=BLN Stats Data
-        - FILEBROWSER_BASE_URL=/filebrowser
+    image: vuknf/filebrowser-noauth:latest
     read_only: false
     volumes:
       - ./DATA:/data
