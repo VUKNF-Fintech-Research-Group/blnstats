@@ -1,4 +1,4 @@
-FROM python:3.12.7
+FROM python:3.14.2
 
 WORKDIR /app
 
@@ -16,9 +16,9 @@ RUN  apt-get update && \
 # Setup Backend
 COPY requirements.txt /app
 RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 
 
+# Serve the API
 EXPOSE 8000
-# CMD ["./start.sh"]
 CMD ["python3", "-u", "main.py", "--serve-api"]
-# CMD ["sleep", "infinity"]
