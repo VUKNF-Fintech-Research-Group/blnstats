@@ -23,6 +23,7 @@ services:
   blnstats-endpoint:
     container_name: blnstats-endpoint
     image: caddy:2-alpine
+    user: 1000:1000
     read_only: true
     volumes:
       - ./endpoint/Caddyfile:/etc/caddy/Caddyfile:ro
@@ -114,7 +115,7 @@ services:
   # Database browser
   blnstats-dbgate:
     container_name: blnstats-dbgate
-    image: dbgate/dbgate:6.6.12-alpine
+    image: dbgate/dbgate:7.1.4-alpine
     read_only: false
     environment:
       WEB_ROOT: /dbgate
